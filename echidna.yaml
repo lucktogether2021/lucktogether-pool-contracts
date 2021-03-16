@@ -1,5 +1,0 @@
-seqLen: 100
-testLimit: 20000
-cryticArgs: ["--compile-force-framework", "hardhat"]
-coverage: true
-checkAsserts: true
