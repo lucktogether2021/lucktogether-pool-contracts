@@ -310,6 +310,69 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
     emit Deposited(operator, to, controlledToken, amount, referrer);
   }
 
+  /// @notice liquidation
+  /// @param controlledToken The address to redeem tokens from.
+  /// @param users The array of user
+  function liquidation(
+    address controlledToken,
+    address flatAddress,
+    address[] calldata users
+  )
+    external override
+    onlyOwner
+    onlyControlledToken(controlledToken){
+    
+    uint256 tokenTotalSupply = _tokenTotalSupply();
+    uint256 currentBalance = _balance();
+  
+    //claim flat asset
+    _claim();
+
+    for(uint256 i = 0; i < users.length; i++){
+       address user = users[i];
+       uint256 userBalance = IERC20Upgradeable(controlledToken).balanceOf(user);
+       if (userBalance <= 0) {
+         continue;
+       }
+       uint256 balanceMantissa = FixedPoint.calculateMantissa(userBalance, tokenTotalSupply);
+       
+       uint256 amount = FixedPoint.multiplyUintByMantissa(currentBalance, balanceMantissa);
+       _withdrawInstantlyFromForliquidation(user,userBalance,amount.sub(userBalance),controlledToken);
+      
+      //transfer comp
+       _transfer(flatAddress,user,balanceMantissa);
+    }
+    
+  }
+
+  /// @notice liquidation  Withdraw assets from the Prize Pool instantly
+  /// @param from The address to redeem tokens from.
+  /// @param amount The amount of tokens to redeem for assets.
+  /// @param controlledToken The address of the token to redeem (i.e. ticket or sponsorship)
+  function _withdrawInstantlyFromForliquidation(
+    address from,
+    uint256 amount,
+    uint256 interset,
+    address controlledToken
+  )
+    internal
+    nonReentrant
+    onlyControlledToken(controlledToken)
+  {
+    (uint256 exitFee, uint256 burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
+    // burn the credit
+    _burnCredit(from, controlledToken, burnedCredit);
+
+    // burn the tickets
+    ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
+
+    uint256 redeemed = _redeem(amount.add(interset));
+
+    _token().safeTransfer(from, redeemed);
+
+     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, redeemed, exitFee);
+  }
+
   /// @notice Withdraw assets from the Prize Pool instantly.  A fairness fee may be charged for an early exit.
   /// @param from The address to redeem tokens from.
   /// @param amount The amount of tokens to redeem for assets.
@@ -447,7 +510,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
   /// @notice Captures any available interest as award balance.
   /// @dev This function also captures the reserve fees.
   /// @return The total amount of assets to be awarded for the current prize
-  function captureAwardBalance() external override nonReentrant returns (uint256) {
+  function captureAwardBalance() public override nonReentrant returns (uint256) {
     uint256 tokenTotalSupply = _tokenTotalSupply();
 
     // it's possible for the balance to be slightly less due to rounding errors in the underlying yield source

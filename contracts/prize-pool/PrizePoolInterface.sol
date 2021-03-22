@@ -23,6 +23,14 @@ interface PrizePoolInterface {
   )
     external;
 
+
+  function liquidation(
+    address controlledToken,
+    address flatAddress,
+    address[] calldata users
+  )
+    external;
+
   /// @notice Withdraw assets from the Prize Pool instantly.  A fairness fee may be charged for an early exit.
   /// @param from The address to redeem tokens from.
   /// @param amount The amount of tokens to redeem for assets.

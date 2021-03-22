@@ -30,4 +30,11 @@ abstract contract YieldSource {
   /// @param redeemAmount The amount of yield-bearing tokens to be redeemed
   /// @return The actual amount of tokens that were redeemed.
   function _redeem(uint256 redeemAmount) internal virtual returns (uint256);
+
+  /// @notice claim
+  function _claim() internal virtual;
+
+  /// @notice transfer
+  function _transfer(address erc20Address,address to,uint256 amountRate) internal virtual;
+
 }

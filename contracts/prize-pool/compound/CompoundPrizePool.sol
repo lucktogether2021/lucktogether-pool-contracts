@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "../../external/compound/CTokenInterface.sol";
+import "../../external/compound/ComptrollerInterface.sol";
 import "../PrizePool.sol";
 
 /// @title Prize Pool with Compound's cToken
@@ -16,6 +17,9 @@ contract CompoundPrizePool is PrizePool {
   using SafeMathUpgradeable for uint256;
 
   event CompoundPrizePoolInitialized(address indexed cToken);
+
+  event Claim();
+  event Transfer(uint256 amount);
 
   /// @notice Interface for the Yield-bearing cToken by Compound
   CTokenInterface public cToken;
@@ -84,4 +88,25 @@ contract CompoundPrizePool is PrizePool {
   function _token() internal override view returns (IERC20Upgradeable) {
     return IERC20Upgradeable(cToken.underlying());
   }
+
+  /// @dev claim flat asset
+  function _claim() internal override {
+    address comptroller = cToken.comptroller();
+    address[] memory cTokens = new address[](1);
+    cTokens[0] =address(cToken);
+    ComptrollerInterface(comptroller).claimComp(address(this),cTokens);
+    emit Claim();
+  }
+  
+  /// @dev transfer flat asset
+  function _transfer(address erc20Address,address to,uint256 amountRate) internal override {
+    uint256 balance = IERC20Upgradeable(erc20Address).balanceOf(address(this));
+    if(balance > 0){
+      uint256 amount = FixedPoint.multiplyUintByMantissa(balance,amountRate);
+      IERC20Upgradeable(erc20Address).transferFrom(address(this), to, amount);
+      emit Transfer(amount);
+    }
+
+  }
+
 }
