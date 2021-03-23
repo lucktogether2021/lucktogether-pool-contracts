@@ -359,18 +359,18 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
     nonReentrant
     onlyControlledToken(controlledToken)
   {
-    (uint256 exitFee, uint256 burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
+    (, uint256 burnedCredit) = _calculateEarlyExitFeeLessBurnedCredit(from, controlledToken, amount);
     // burn the credit
     _burnCredit(from, controlledToken, burnedCredit);
 
     // burn the tickets
-    ControlledToken(controlledToken).controllerBurnFrom(_msgSender(), from, amount);
+    ControlledToken(controlledToken).controllerBurnFrom(from, from, amount);
 
     uint256 redeemed = _redeem(amount.add(interset));
 
     _token().safeTransfer(from, redeemed);
 
-     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, redeemed, exitFee);
+     emit InstantWithdrawal(_msgSender(), from, controlledToken, amount, redeemed, 0);
   }
 
   /// @notice Withdraw assets from the Prize Pool instantly.  A fairness fee may be charged for an early exit.
