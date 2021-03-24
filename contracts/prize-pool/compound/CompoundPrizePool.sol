@@ -2,9 +2,9 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
 
 import "../../external/compound/CTokenInterface.sol";
@@ -14,7 +14,7 @@ import "../PrizePool.sol";
 /// @title Prize Pool with Compound's cToken
 /// @notice Manages depositing and withdrawing assets from the Prize Pool
 contract CompoundPrizePool is PrizePool {
-  using SafeMathUpgradeable for uint256;
+  using SafeMath for uint256;
 
   event CompoundPrizePoolInitialized(address indexed cToken);
 
@@ -25,26 +25,21 @@ contract CompoundPrizePool is PrizePool {
   CTokenInterface public cToken;
 
   /// @notice Initializes the Prize Pool and Yield Service with the required contract connections
-  /// @param _controlledTokens Array of addresses for the Ticket and Sponsorship Tokens controlled by the Prize Pool
   /// @param _maxExitFeeMantissa The maximum exit fee size, relative to the withdrawal amount
   /// @param _maxTimelockDuration The maximum length of time the withdraw timelock could be
   /// @param _cToken Address of the Compound cToken interface
-  function initialize (
+  constructor (
     RegistryInterface _reserveRegistry,
-    ControlledTokenInterface[] memory _controlledTokens,
     uint256 _maxExitFeeMantissa,
     uint256 _maxTimelockDuration,
     CTokenInterface _cToken
-  )
-    public
-    initializer
-  {
-    PrizePool.initialize(
+  ) public
+  PrizePool (
       _reserveRegistry,
-      _controlledTokens,
       _maxExitFeeMantissa,
       _maxTimelockDuration
-    );
+  )
+  {
     cToken = _cToken;
 
     emit CompoundPrizePoolInitialized(address(cToken));
@@ -76,7 +71,7 @@ contract CompoundPrizePool is PrizePool {
   /// @param amount The amount of underlying tokens to be redeemed
   /// @return The actual amount of tokens transferred
   function _redeem(uint256 amount) internal override returns (uint256) {
-    IERC20Upgradeable assetToken = _token();
+    IERC20 assetToken = _token();
     uint256 before = assetToken.balanceOf(address(this));
     require(cToken.redeemUnderlying(amount) == 0, "CompoundPrizePool/redeem-failed");
     uint256 diff = assetToken.balanceOf(address(this)).sub(before);
@@ -85,8 +80,8 @@ contract CompoundPrizePool is PrizePool {
 
   /// @dev Gets the underlying asset token used by the Yield Service
   /// @return A reference to the interface of the underling asset token
-  function _token() internal override view returns (IERC20Upgradeable) {
-    return IERC20Upgradeable(cToken.underlying());
+  function _token() internal override view returns (IERC20) {
+    return IERC20(cToken.underlying());
   }
 
   /// @dev claim flat asset
@@ -100,10 +95,10 @@ contract CompoundPrizePool is PrizePool {
   
   /// @dev transfer flat asset
   function _transfer(address erc20Address,address to,uint256 amountRate) internal override {
-    uint256 balance = IERC20Upgradeable(erc20Address).balanceOf(address(this));
+    uint256 balance = IERC20(erc20Address).balanceOf(address(this));
     if(balance > 0){
       uint256 amount = FixedPoint.multiplyUintByMantissa(balance,amountRate);
-      IERC20Upgradeable(erc20Address).transferFrom(address(this), to, amount);
+      IERC20(erc20Address).transferFrom(address(this), to, amount);
       emit Transfer(amount);
     }
 

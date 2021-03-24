@@ -2,14 +2,14 @@
 
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./TokenControllerInterface.sol";
 import "./ControlledTokenInterface.sol";
 
 /// @title Controlled ERC20 Token
 /// @notice ERC20 Tokens with a controller for minting & burning
-contract ControlledToken is ERC20Upgradeable, ControlledTokenInterface {
+contract ControlledToken is ERC20, ControlledTokenInterface {
 
   /// @notice Interface to the contract responsible for controlling mint/burn
   TokenControllerInterface public override controller;
@@ -19,17 +19,14 @@ contract ControlledToken is ERC20Upgradeable, ControlledTokenInterface {
   /// @param _symbol The symbol for the Token
   /// @param _decimals The number of decimals for the Token
   /// @param _controller Address of the Controller contract for minting & burning
-  function initialize(
+  constructor (
     string memory _name,
     string memory _symbol,
     uint8 _decimals,
     TokenControllerInterface _controller
-  )
-    public
-    virtual
-    initializer
+  ) public
+    ERC20(_name, _symbol)
   {
-    __ERC20_init(_name, _symbol);
     controller = _controller;
     _setupDecimals(_decimals);
   }

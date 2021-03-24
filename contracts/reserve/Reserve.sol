@@ -2,21 +2,17 @@
 
 pragma solidity >=0.5.0 <0.7.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./ReserveInterface.sol";
 import "../prize-pool/PrizePoolInterface.sol";
 
 /// @title Interface that allows a user to draw an address using an index
-contract Reserve is OwnableUpgradeable, ReserveInterface {
+contract Reserve is Ownable, ReserveInterface {
 
   event ReserveRateMantissaSet(uint256 rateMantissa);
 
   uint256 public rateMantissa;
-
-  constructor () public {
-    __Ownable_init();
-  }
 
   function setRateMantissa(
     uint256 _rateMantissa

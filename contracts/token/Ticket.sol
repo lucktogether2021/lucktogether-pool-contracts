@@ -22,18 +22,14 @@ contract Ticket is ControlledToken, TicketInterface {
   /// @param _symbol The symbol for the Token
   /// @param _decimals The number of decimals for the Token
   /// @param _controller Address of the Controller contract for minting & burning
-  function initialize(
+  constructor(
     string memory _name,
     string memory _symbol,
     uint8 _decimals,
     TokenControllerInterface _controller
-  )
-    public
-    virtual
-    override
-    initializer
+  ) public
+    ControlledToken(_name, _symbol, _decimals, _controller)
   {
-    super.initialize(_name, _symbol, _decimals, _controller);
     sortitionSumTrees.createTree(TREE_KEY, MAX_TREE_LEAVES);
   }
 

@@ -2,19 +2,15 @@
 
 pragma solidity >=0.5.0 <0.7.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./RegistryInterface.sol";
 
 /// @title Interface that allows a user to draw an address using an index
-contract Registry is OwnableUpgradeable, RegistryInterface {
+contract Registry is Ownable, RegistryInterface {
   address private pointer;
 
   event Registered(address indexed pointer);
-
-  constructor () public {
-    __Ownable_init();
-  }
 
   function register(address _pointer) external onlyOwner {
     pointer = _pointer;
