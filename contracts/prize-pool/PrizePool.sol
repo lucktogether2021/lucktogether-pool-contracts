@@ -321,6 +321,7 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
     external override
     onlyOwner
     onlyControlledToken(controlledToken){
+    require(!_isControlled(flatAddress) && flatAddress != address(_token()),"PrizePool/error flatAddress");
     
     uint256 tokenTotalSupply = _tokenTotalSupply();
     uint256 currentBalance = _balance();
